@@ -5,6 +5,10 @@
 在真实浏览器里排版测量，不猜 CSS：读 `getBoundingClientRect()` 与 `getComputedStyle()`，
 文本用 `Range.getClientRects()` 拿到每一个视觉行的精确盒子。整个包（`.zip`）先内联资源再逐页捕获。
 
+![真实页面 vs 复刻](docs/preview.png)
+
+> 左：真实页面；右：复刻出来的图层。逐像素对比 MAE 0.28–1.51 / 255，剩余差异集中在边框与圆角的抗锯齿边缘。
+
 ## 安装
 
 1. 下载或克隆本仓库；

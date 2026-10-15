@@ -1,0 +1,9 @@
+# 统一换行：仓库里一律 LF，检出时不因平台而变
+* text=auto eol=lf
+
+# 二进制不要参与换行转换与 diff
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.zip binary
+*.svg text eol=lf

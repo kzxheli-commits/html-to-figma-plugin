@@ -1,0 +1,18 @@
+{
+  "name": "HTML → Figma 1:1 复刻",
+  "id": "html-to-figma-one-to-one-clone",
+  "api": "1.0.0",
+  "main": "plugin/code.js",
+  "ui": "plugin/ui.html",
+  "editorType": [
+    "figma",
+    "dev"
+  ],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "*"
+    ],
+    "reasoning": "需要通过可配置的 CORS 代理抓取目标网页 HTML，并从原站抓取图片等资源，才能把页面 1:1 复刻到 Figma。图片抓取仅在本地插件界面中按需发生。"
+  }
+}

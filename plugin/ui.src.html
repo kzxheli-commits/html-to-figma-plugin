@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>HTML → Figma 1:1 复刻</title>
+<style>
+  :root{
+    --bg: var(--figma-color-bg, #ffffff);
+    --bg2: var(--figma-color-bg-secondary, #f5f5f5);
+    --bg3: var(--figma-color-bg-tertiary, #ebebeb);
+    --text: var(--figma-color-text, #1e1e1e);
+    --text2: var(--figma-color-text-secondary, #6b6b6b);
+    --border: var(--figma-color-border, #e6e6e6);
+    --brand: var(--figma-color-bg-brand, #0d99ff);
+    --onbrand: var(--figma-color-text-onbrand, #ffffff);
+    --danger: #e5484d;
+    --ok: #2f9e44;
+    --warn: #d97706;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  /* 全局隐藏滚动条（只藏条，滚动能力保留） */
+  *{scrollbar-width:none;-ms-overflow-style:none;}
+  *::-webkit-scrollbar{width:0;height:0;display:none;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--bg);color:var(--text);
+    font:12px/1.5 Inter,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    display:flex;flex-direction:column;height:100vh;overflow:hidden;
+  }
+  header{padding:12px 14px 10px;border-bottom:1px solid var(--border);flex:none;}
+  header h1{margin:0;font-size:13px;font-weight:600;letter-spacing:.2px;}
+  header p{margin:3px 0 0;color:var(--text2);font-size:11px;}
+  main{flex:1;overflow-y:auto;padding:12px 14px 18px;}
+  .tabs{display:flex;gap:6px;margin-bottom:10px;}
+  .tab{
+    flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border);
+    background:var(--bg2);color:var(--text2);cursor:pointer;font-size:11px;text-align:center;
+  }
+  .tab.active{background:var(--brand);border-color:var(--brand);color:var(--onbrand);font-weight:600;}
+  textarea,input[type=text],input[type=number],select{
+    width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--border);
+    border-radius:6px;padding:7px 8px;font-size:11px;font-family:var(--mono);outline:none;
+  }
+  textarea{height:130px;resize:vertical;line-height:1.45;}
+  textarea:focus,input:focus,select:focus{border-color:var(--brand);}
+  select{font-family:inherit;}
+  .row{display:flex;gap:8px;}
+  .row > *{flex:1;min-width:0;}
+  .field{margin-bottom:8px;}
+  .field label{display:block;margin-bottom:4px;color:var(--text2);font-size:11px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .checks{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin:10px 0 2px;}
+  .chk{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;}
+  .chk input{accent-color:var(--brand);}
+  .actions{display:flex;gap:8px;margin-top:12px;}
+  button{
+    border:0;border-radius:6px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;
+    background:var(--bg3);color:var(--text);font-family:inherit;
+  }
+  button.primary{background:var(--brand);color:var(--onbrand);flex:1;}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  button.ghost{background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 10px;font-weight:500;}
+  .progress{margin-top:12px;height:6px;background:var(--bg3);border-radius:99px;overflow:hidden;}
+  #bar-fill{height:100%;width:0;background:var(--brand);transition:width .18s ease;}
+  #progress-label{margin-top:5px;color:var(--text2);font-size:11px;font-family:var(--mono);}
+  .section-title{display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px;}
+  .section-title span{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.4px;}
+  #log{
+    background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px;
+    height:96px;overflow-y:auto;font:11px/1.6 var(--mono);color:var(--text2);
+  }
+  .log-line{white-space:pre-wrap;word-break:break-all;}
+  .log-line.error{color:var(--danger);}
+  .log-line.warn{color:var(--warn);}
+  .log-line.ok{color:var(--ok);}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .stat{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 8px;text-align:center;}
+  .stat b{display:block;font-size:14px;}
+  .stat span{color:var(--text2);font-size:10px;}
+  .sect-title{margin:10px 0 5px;font-size:11px;font-weight:600;color:var(--text2);}
+  .warn-list{margin:0;padding-left:16px;color:var(--text2);font-size:11px;line-height:1.6;}
+  .warn-list li{margin-bottom:2px;word-break:break-word;}
+  #stage{position:fixed;left:-30000px;top:0;border:0;}
+  .hint{color:var(--text2);font-size:10.5px;margin-top:6px;line-height:1.5;}
+  .divider{height:1px;background:var(--border);margin:14px 0 10px;}
+
+  /* 数字输入：藏掉原生 spinner，换成右侧一对自绘加减按钮 */
+  input[type=number]{appearance:textfield;-moz-appearance:textfield;}
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .num-wrap{position:relative;display:block;}
+  .num-wrap > input{padding-right:27px;}
+  .num-btns{
+    position:absolute;right:1px;top:1px;bottom:1px;width:23px;display:flex;flex-direction:column;
+    border-left:1px solid var(--border);border-radius:0 5px 5px 0;overflow:hidden;
+    background:var(--bg2);   /* 跟输入框底色一致，看起来是同一个控件 */
+  }
+  .num-btn{
+    flex:1;display:flex;align-items:center;justify-content:center;padding:0;
+    border:0;background:transparent;color:var(--text2);font-size:11px;font-weight:600;line-height:1;
+    cursor:pointer;font-family:var(--mono);transition:background .12s ease,color .12s ease;
+  }
+  .num-btn:hover{background:var(--bg3);color:var(--text);}
+  .num-btn:active{background:var(--brand);color:var(--onbrand);}
+  .num-btn + .num-btn{border-top:1px solid var(--border);}
+
+  /* 输入 / 文件 两种模式 */
+  .modes{display:flex;gap:6px;margin-bottom:9px;}
+  .mode{
+    flex:1;padding:7px 8px;border-radius:6px;border:1px solid var(--border);
+    background:var(--bg2);color:var(--text2);cursor:pointer;font-size:11px;font-weight:500;
+  }
+  .mode.active{background:var(--brand);border-color:var(--brand);color:var(--onbrand);font-weight:600;}
+  .dropbox{
+    border:1.5px dashed var(--border);border-radius:10px;padding:24px 16px 20px;text-align:center;
+    color:var(--text2);font-size:11.5px;line-height:1.9;cursor:pointer;background:var(--bg2);
+    transition:border-color .16s ease,background .16s ease,color .16s ease;
+  }
+  .dropbox:hover,.dropbox:focus,.dropbox.dragging{
+    border-color:var(--brand);background:var(--bg3);color:var(--text);outline:none;
+  }
+  .dropbox svg{display:block;margin:0 auto 10px;opacity:.7;}
+  .dropbox:hover svg,.dropbox.dragging svg{opacity:1;color:var(--brand);}
+  .dropbox-title{
+    display:block;margin-bottom:9px;color:var(--text);font-size:12.5px;
+    font-weight:600;letter-spacing:.2px;
+  }
+  .dropbox:hover .dropbox-title{color:var(--brand);}
+  .dropbox-line{display:block;}
+  .dropbox-line em{font-style:normal;color:var(--text);font-weight:600;}
+  .dropbox-hint{display:block;margin-top:9px;font-size:11px;opacity:.85;}
+  .file-note{
+    margin-top:9px;padding:8px 10px;border-radius:6px;border:1px solid var(--border);
+    background:var(--bg2);color:var(--text2);font-size:11px;line-height:1.65;
+    word-break:break-all;display:none;
+  }
+  .file-note b{color:var(--text);}
+
+  /* 文件队列 */
+  .queue{margin-top:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);overflow:hidden;}
+  .queue-head{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border);}
+  .queue-title{flex:1;font-size:11.5px;font-weight:600;color:var(--text);}
+  .queue-title b{color:var(--brand);font-weight:700;margin-left:2px;}
+  .queue-list{list-style:none;margin:0;padding:0;max-height:170px;overflow-y:auto;}
+  .queue-item{display:flex;align-items:center;gap:7px;padding:7px 10px;font-size:11px;border-bottom:1px solid var(--border);}
+  .queue-item:last-child{border-bottom:0;}
+  .qi-state{width:7px;height:7px;border-radius:50%;flex:none;background:var(--text2);opacity:.45;}
+  .qi-state.qi-running{background:var(--brand);opacity:1;animation:h2fPulse 1.1s ease-in-out infinite;}
+  .qi-state.qi-done{background:var(--ok);opacity:1;}
+  .qi-state.qi-error{background:var(--danger);opacity:1;}
+  @keyframes h2fPulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .qi-name{flex:1;min-width:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .qi-meta{flex:none;color:var(--text2);}
+  .qi-x{border:0;background:transparent;color:var(--text2);cursor:pointer;font-size:14px;line-height:1;padding:0 3px;border-radius:4px;}
+  .qi-x:hover{background:var(--bg3);color:var(--danger);}
+  .ghost.mini{padding:4px 9px;font-size:11px;}
+  /* 选项分组与预设 */
+  .presets{display:flex;gap:5px;margin-left:auto;}
+  .optgroup{margin:0 0 9px;}
+  .optheader{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    color:var(--text2);opacity:.8;margin:0 0 6px;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  details.adv{border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-top:10px;}
+  details.adv > summary{cursor:pointer;padding:8px 11px;font-size:12px;color:var(--text2);list-style:none;}
+  details.adv > summary::-webkit-details-marker{display:none;}
+  details.adv > summary::after{content:"\25be";float:right;opacity:.6;}
+  details.adv[open] > summary::after{content:"\25b4";}
+  details.adv .adv-body{padding:0 11px 11px;}
+  /* 还原模式：两个卡片式单选。
+     类名刻意不叫 .modes / .mode —— 那两个已经被顶部的「输入模式 / 文件模式」用了，
+     重名会把顶部的横向切换挤成纵向。 */
+  .rmodes{display:flex;flex-direction:column;gap:8px;}
+  .rmode{display:flex;gap:9px;align-items:flex-start;padding:10px 11px;
+    border:1px solid var(--border);border-radius:8px;background:var(--bg2);cursor:pointer;}
+  .rmode:hover{border-color:var(--brand);}
+  .rmode input{margin:2px 0 0;}
+  .rmode-body{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .rmode-body b{font-size:12.5px;font-weight:600;}
+  .rmode-body em{font-style:normal;font-size:11px;color:var(--text2);line-height:1.45;}
+  .chk.inline{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;}
+  .note{font-size:11px;color:var(--text2);line-height:1.5;margin-top:7px;}
+  .note:empty{display:none;}
+  .presets .chk.inline{margin:0;}
+  .dropbox code{
+    font-family:var(--mono);font-size:11px;background:var(--bg3);border:1px solid var(--border);
+    padding:0 4px;border-radius:3px;color:var(--text);
+  }
+</style>
+</head>
+<body class="h2f-plugin">
+<header>
+  <h1>HTML → Figma 1:1 复刻</h1>
+  <p>用真实浏览器排版测量，逐像素还原为可编辑图层</p>
+</header>
+
+<main>
+  <!-- 原来顶部的 4 个页签已合并进这两种模式 -->
+  <div class="modes">
+    <button type="button" class="mode active" id="mode-input">输入模式</button>
+    <button type="button" class="mode" id="mode-file">文件模式</button>
+  </div>
+
+  <div id="input-panel">
+    <div id="mode-input-body">
+      <div class="field">
+        <textarea id="html" placeholder="把整段 HTML（含 &lt;style&gt;）粘进来，或直接粘贴一个网址…"></textarea>
+      </div>
+      <div class="row">
+        <button class="ghost" id="btn-sample">填入示例</button>
+        <button class="ghost" id="btn-clear">清空日志</button>
+      </div>
+      <div class="field" style="margin-top:9px">
+        <label>抓取用的 CORS 代理（输入框里粘的是一串网址时生效，失败可换一个）</label>
+        <select id="proxy">
+          <option value="allorigins">api.allorigins.win</option>
+          <option value="codetabs">api.codetabs.com</option>
+          <option value="corsproxy">corsproxy.io</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="mode-file-body" style="display:none">
+      <div class="dropbox" id="file-dropbox" tabindex="0" role="button" aria-label="选择或拖入文件">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        <span class="dropbox-title">点击这里选择文件</span>
+        <span class="dropbox-line">可 <em>单选</em>，也可 <em>多选</em>（Ctrl / ⌘ 逐个点选）</span>
+        <span class="dropbox-line">支持 <code>.html</code> 单页与 <code>.zip</code> 整包，也能直接拖入文件或文件夹</span>
+      </div>
+      <input type="file" id="file-pick" accept=".html,.htm,.zip,application/zip" multiple style="display:none">
+      <div class="file-note" id="file-note"></div>
+
+      <div class="queue" id="file-queue" style="display:none">
+        <div class="queue-head">
+          <span class="queue-title">文件队列 <b id="queue-count">0</b></span>
+          <button class="ghost mini" type="button" id="queue-run">全部复刻</button>
+          <button class="ghost mini" type="button" id="queue-clear">清空</button>
+        </div>
+        <ul class="queue-list" id="queue-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>视口与裁剪</span>
+    <span class="presets">
+      <label class="chk inline" title="按页面的 meta viewport 与媒体查询断点判断端型，自动给出视口与画板范围；手动改下面任一项即关闭"><input type="checkbox" id="autoViewport" checked> 自动识别</label>
+    </span>
+  </div>
+  <div class="field">
+    <label>设备预设</label>
+    <select id="devicePreset">
+      <optgroup label="安卓设备">
+        <option value="412x915">Pixel 7 / 8　412×915</option>
+        <option value="360x780">Galaxy S 系列　360×780</option>
+        <option value="360x800">通用安卓　360×800</option>
+        <option value="414x896">大屏安卓　414×896</option>
+      </optgroup>
+      <optgroup label="iOS（参考）">
+        <option value="393x852">iPhone 15 / 14　393×852</option>
+        <option value="375x667">iPhone SE　375×667</option>
+      </optgroup>
+      <optgroup label="网页">
+        <option value="1366x768">笔记本 1366×768</option>
+        <option value="1440x900">桌面 1440×900</option>
+        <option value="1512x982">MacBook 14　1512×982</option>
+        <option value="1920x1080">全高清 1920×1080</option>
+      </optgroup>
+      <optgroup label="平板">
+        <option value="744x1133">iPad mini　744×1133</option>
+        <option value="834x1194">iPad Pro 11　834×1194</option>
+      </optgroup>
+    </select>
+  </div>
+  <div class="grid">
+    <div class="field">
+      <label>视口宽度 (px)</label>
+      <input type="number" id="vw" value="412" min="240" max="4096" step="1">
+    </div>
+    <div class="field">
+      <label>视口高度 (px)</label>
+      <input type="number" id="vh" value="915" min="240" max="4096" step="1">
+    </div>
+  </div>
+  <div class="field">
+    <label>画板范围</label>
+    <select id="crop">
+      <option value="content">贴合内容（推荐，自动裁掉空白边）</option>
+      <option value="document">整个文档（保留 body 外边距）</option>
+      <option value="viewport">一屏（视口高度，App / 手机页推荐）</option>
+    </select>
+  </div>
+  <div class="note" id="autoNote"></div>
+
+  <div class="section-title"><span>还原模式</span></div>
+  <div class="rmodes">
+    <label class="rmode">
+      <input type="radio" name="renderMode" value="style">
+      <span class="rmode-body">
+        <b>仅样式</b>
+        <em>只要视觉还原。不读交互、不建原型连线，也不为弹层与视图额外出稿，跑得更快。</em>
+      </span>
+    </label>
+    <label class="rmode">
+      <input type="radio" name="renderMode" value="both" checked>
+      <span class="rmode-body">
+        <b>样式 + 交互</b>
+        <em>视觉还原之外，读页面代码得出跨页跳转、弹层与路由视图，写成可点的原型连线。</em>
+      </span>
+    </label>
+  </div>
+
+  <details class="adv">
+    <summary>高级（渲染与产出细节）</summary>
+    <div class="adv-body">
+      <div class="optgroup">
+        <div class="optheader">渲染</div>
+        <div class="checks">
+          <label class="chk" title="冻结 CSS 动画与过渡，避免捕到中间帧"><input type="checkbox" id="disableAnimation" checked> 禁用动画</label>
+          <label class="chk" title="把 ::before / ::after 画成真实图层"><input type="checkbox" id="capturePseudo" checked> 捕获伪元素</label>
+          <label class="chk" title="按层叠顺序输出图层，遮挡关系正确"><input type="checkbox" id="zIndexSort" checked> 按 z-index 排序</label>
+          <label class="chk" title="允许页面脚本执行（路由探测、JS 渲染的内容都需要它）"><input type="checkbox" id="allowScripts"> 允许执行脚本</label>
+        </div>
+      </div>
+      <div class="optgroup">
+        <div class="optheader">交互分析</div>
+        <div class="checks">
+          <label class="chk" title="页内弹层（:target 弹窗）用 OVERLAY 连过去；SPA 的每个路由视图（#/xxx）也单独出一张画板并用 NAVIGATE 连起来"><input type="checkbox" id="overlayStates" checked> 弹层与视图单独成稿</label>
+          <label class="chk" title="把 :hover 规则落成画面：逐条临时套用后重捕，产出「悬停态」画板"><input type="checkbox" id="hoverStates"> :hover 状态稿</label>
+          <label class="chk" title="兜底手段：交互主要靠读页面自己的代码得出（addEventListener / pushState / data-* 属性）。读不出来时才用它，它会真的试点击页面元素。"><input type="checkbox" id="probeRoutes"> 路由探测（兜底）</label>
+        </div>
+      </div>
+      <div class="optgroup" style="margin-bottom:0">
+        <div class="optheader">产出样式</div>
+        <div class="checks">
+          <label class="chk" title="整稿只由灰阶色块构成（文字占位条 + 图片/图标色块），无描边"><input type="checkbox" id="lowfiMode"> 低保真线框稿</label>
+          <label class="chk" title="给每个页面垫一块比它大一圈的白色画板，导出或展示时留出白边"><input type="checkbox" id="backdrop"> 白色衬底</label>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:11px">
+        <div class="field">
+          <label>文本还原方式</label>
+          <select id="textMode">
+            <option value="line">逐行（最像原图）</option>
+            <option value="block">整块（最好编辑）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>阴影模糊系数</label>
+          <input type="number" id="shadowScale" value="1" min="0.1" max="4" step="0.1">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>最大图层数（超出会截断）</label>
+        <input type="number" id="maxNodes" value="20000" min="100" max="200000" step="100">
+      </div>
+    </div>
+  </details>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="btn-run">开始复刻</button>
+    <button id="btn-cancel" disabled>取消</button>
+  </div>
+
+  <div class="progress"><div id="bar-fill"></div></div>
+  <div id="progress-label">待开始</div>
+
+  <div class="section-title"><span>运行日志</span></div>
+  <div id="log"></div>
+
+  <div class="section-title"><span>结果</span></div>
+  <div id="report"></div>
+
+  <div class="divider"></div>
+  <div class="hint">
+    限制：不支持 conic-gradient / clip-path / mask / 滤镜颜色类效果 / 跨域画布像素 / 斜切变换；
+    页面跳转（a[href] / onclick / 表单）会被提取并写成 Figma 原型连线，:hover 与动画中间态只记录规则，详见 README。
+  </div>
+</main>
+
+<iframe id="stage" sandbox="allow-same-origin" style="position:fixed;left:-30000px;top:0;border:0;width:1px;height:1px;"></iframe>
+<script src="../core/engine.js"></script>
+<script src="../core/session.js"></script>
+<script src="../core/vfs.js"></script>
+<script src="../core/interactions.js"></script>
+<script src="../core/code-interactions.js"></script>
+<script src="../core/viewport.js"></script>
+<script src="../core/flow.js"></script>
+<script src="../core/lowfi.js"></script>
+<script src="../core/backdrop.js"></script>
+<script src="../core/route-probe.js"></script>
+<script src="../core/hover-states.js"></script>
+<script src="../core/overlay-states.js"></script>
+<script src="../core/view-states.js"></script>
+</body>
+</html>
